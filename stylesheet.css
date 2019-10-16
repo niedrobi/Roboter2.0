@@ -1,0 +1,29 @@
+div.stream{
+    width: 62%;
+    float: left;
+    text-align: center;
+    margin: 1%;
+    height: auto;
+}
+
+div.data {
+    display: block;
+    float: right;
+    position: center;
+    width: 34%;
+    margin: 1%;
+}
+
+body {
+    background-color: peachpuff;
+    float: contour;
+    width: 50%;
+    position: center;
+    align-content: center;
+    margin-left: 25%;
+    margin-right: 25%;
+}
+
+#received {
+    background-color: aliceblue;
+}
