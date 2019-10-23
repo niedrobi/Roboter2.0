@@ -7,7 +7,7 @@ from tornado.options import define, options
 import os
 import time
 import multiprocessing
-import serialworker
+import websocket.serialworker
 import json
  
 define("port", default=8080, help="run on the given port", type=int)
@@ -23,11 +23,11 @@ output_queue = multiprocessing.Queue()
  
 class IndexHandler(tornado.web.RequestHandler):
     def get(self):
-        self.render('index.html')
+        self.render('website/index.html')
 
 class StaticFileHandler(tornado.web.RequestHandler):
 	def get(self):
-		self.render('main.js')
+		self.render('website/main.js')
  
 class WebSocketHandler(tornado.websocket.WebSocketHandler):
     def open(self):
@@ -61,14 +61,14 @@ def checkQueue():
 
 if __name__ == '__main__':
 	## start the serial worker in background (as a deamon)
-	sp = serialworker.SerialProcess(input_queue, output_queue)
+	sp = websocket.serialworker.SerialProcess(input_queue, output_queue)
 	sp.daemon = True
 	sp.start()
 	tornado.options.parse_command_line()
 	app = tornado.web.Application(
 	    [
 	        (r"/", IndexHandler),
-	        (r"/static/(.*)", tornado.web.StaticFileHandler, {'path':  './'}),
+	        (r"/static/(.*)", tornado.web.StaticFileHandler, {'path':  './website'}),
 	        (r"/ws", WebSocketHandler)
 	    ]
 	)
