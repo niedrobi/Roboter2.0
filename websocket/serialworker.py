@@ -2,6 +2,7 @@ import serial
 import time
 import multiprocessing
 import json
+import RPi.GPIO as GPIO
 #import drive
 import wiringpi
 
@@ -15,6 +16,8 @@ class SerialProcess(multiprocessing.Process):
         multiprocessing.Process.__init__(self)
         self.input_queue = input_queue
         self.output_queue = output_queue
+        self.pan_time = 0
+        self.tilt_time = 0
         #self.driver = drive.Driver()
         #self.sp = serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=1)
         
@@ -22,10 +25,21 @@ class SerialProcess(multiprocessing.Process):
     def close(self):
         print "closed"
 
+    def camera_tilt(self,dc):
+        self.tilt.ChangeDutyCycle(dc)
+        self.tilt_time = time.time()
+
+    def camera_pan(self,dc):
+        self.pan.ChangeDutyCycle(dc)
+        self.pan_time = time.time()
+
     def drive(self, state):
         if state == "stop":
-            wiringpi.digitalWrite(self.MOTORS['MOTOR_VL_CTRL'], self.HIGH)
-            wiringpi.softPwmWrite(self.MOTORS['MOTOR_VL_PWM'], 100)
+            #wiringpi.digitalWrite(self.MOTORS['MOTOR_VL_CTRL'], self.HIGH)
+            #vl = GPIO.PWM(self.MOTORS['MOTOR_VL_PWM'], 100)
+            #vl.start(1)
+            #hier nur noch dc nder und ganzes PWM fr jeden Motor in init
+            #wiringpi.softPwmWrite(self.MOTORS['MOTOR_VL_PWM'], 100)
 
             wiringpi.digitalWrite(self.MOTORS['MOTOR_HL_CTRL'], self.HIGH)
             wiringpi.softPwmWrite(self.MOTORS['MOTOR_HL_PWM'], 100)
@@ -88,9 +102,9 @@ class SerialProcess(multiprocessing.Process):
             wiringpi.digitalWrite(self.MOTORS['MOTOR_HR_CTRL'], self.HIGH)
             wiringpi.softPwmWrite(self.MOTORS['MOTOR_HR_PWM'], 0)
 
-    def init_LEDs(self):
-        wiringpi.pinMode(self.LEDs['LED_FRONT'], wiringpi.GPIO.OUTPUT)
-        wiringpi.pinMode(self.LEDs['LED_REAR'], wiringpi.GPIO.OUTPUT)
+    #def init_LEDs(self):
+        #wiringpi.pinMode(self.LEDs['LED_FRONT'], wiringpi.GPIO.OUTPUT)
+        #wiringpi.pinMode(self.LEDs['LED_REAR'], wiringpi.GPIO.OUTPUT)
         #pinMode(LED_FRONT, self.OUTPUT)
         #pinMode(LED_REAR, self.OUTPUT)
 
@@ -106,10 +120,10 @@ class SerialProcess(multiprocessing.Process):
         wiringpi.pinMode(self.SENSORS['DISTANZSENSOR_R'], wiringpi.GPIO.INPUT)
         wiringpi.pullUpDnControl(self.SENSORS['DISTANZSENSOR_R'], wiringpi.GPIO.PUD_UP)
 
-    def init_Trace(self):
-        wiringpi.pinMode(self.TRACE['SPUR_L'], wiringpi.GPIO.INPUT)
-        wiringpi.pinMode(self.TRACE['SPUR_R'], wiringpi.GPIO.INPUT)
-
+    #def init_Trace(self):
+        #wiringpi.pinMode(self.TRACE['SPUR_L'], wiringpi.GPIO.INPUT)
+        #wiringpi.pinMode(self.TRACE['SPUR_R'], wiringpi.GPIO.INPUT)
+        #sssgflskljdg
     def init_Motors(self):
         wiringpi.pinMode(self.MOTORS['MOTOR_VL_CTRL'], wiringpi.GPIO.OUTPUT)
         wiringpi.pinMode(self.MOTORS['MOTOR_VL_PWM'], wiringpi.GPIO.PWM_OUTPUT)
@@ -130,28 +144,37 @@ class SerialProcess(multiprocessing.Process):
     def init_Taster(self):
         wiringpi.pinMode(self.TASTER, wiringpi.GPIO.INPUT)
         wiringpi.pullUpDnControl(self.TASTER, wiringpi.GPIO.PUD_UP)
-         
-    def run(self):
 
-        t_right = t_left = driving = driving_b = False
-    	#self.sp.flushInput()
-	# Motoren
+    def init_Camera(self):       
+        tiltPin = 13
+        panPin = 12
+        GPIO.setup(tiltPin, GPIO.OUT)
+        GPIO.setup(panPin, GPIO.OUT)
+        self.tilt = GPIO.PWM(tiltPin,50)
+        self.pan = GPIO.PWM(panPin,50)
+        self.tilt.start(0)
+        self.pan.start(0)
+
+    def init(self):
+        #self.sp.flushInput()
+	    # GPIO-Pin-configuration for motors
         self.MOTORS = {
-            'MOTOR_VL_PWM': 7,
-            'MOTOR_VL_CTRL': 11,
-            'MOTOR_VR_PWM': 10,
+            'MOTOR_VL_PWM': 7, #PWM-signal front-left
+            'MOTOR_VL_CTRL': 11, #Controll-signal front-left
+            'MOTOR_VR_PWM': 10, #
             'MOTOR_VR_CTRL': 13,
             'MOTOR_HL_PWM': 12,
             'MOTOR_HL_CTRL': 14,
             'MOTOR_HR_PWM': 15,
             'MOTOR_HR_CTRL': 16
         }
+        # Not in use
         # LED's
-        self.LEDs = {
-            'LED_REAR': 4,
-            'LED_FRONT': 5
-        }
-        # Sensoren
+        #self.LEDs = {
+        #    'LED_REAR': 4,
+        #    'LED_FRONT': 5
+        #}
+        # GPIO-Pin-configuration for sensors
         self.SENSORS = {
             'DISTANZSENSOR_F': 101,
             'DISTANZSENSOR_L': 102,
@@ -173,18 +196,40 @@ class SerialProcess(multiprocessing.Process):
         self.INPUT = 0
         self.PWM_OUTPUT = 1
         self.PUD_UP = 2
-	self.HIGH = 1
-	self.LOW = 0
+        self.HIGH = 1
+        self.LOW = 0
         wiringpi.wiringPiSetup()
+
+        GPIO.setmode(GPIO.BOARD)
         #wiringpi.wiringPiSetupGpio()
         wiringpi.mcp23017Setup(100, 0x20)
-        self.init_LEDs()
+        #self.init_LEDs()
         self.init_Sensors()
-        self.init_Trace()
+        #self.init_Trace()
         self.init_Taster()
         self.init_Motors()
-	self.drive("stop")
+        self.init_Camera()
+        self.drive("stop")
  
+         
+    def run(self):
+
+        self.init()
+        t_right = t_left = driving = driving_b = False
+        while 1: #make camera movement more smooth
+            for i in range(30,120,1):
+                a = i/10
+                self.camera_pan(a)
+                self.camera_tilt(a)
+                time.sleep(0.01)
+            for i in range(120,30,-1):
+                a = i/10
+                self.camera_pan(a)
+                self.camera_tilt(a)
+                time.sleep(0.01)
+        self.camera_pan(7.5)
+        self.camera_tilt(7.5)
+    	
         while True:
             # look for incoming tornado request
             if not self.input_queue.empty():
@@ -193,9 +238,9 @@ class SerialProcess(multiprocessing.Process):
                 if json_data['Axis0'] == '1' and t_right == False:
                     self.output_queue.put("Turning Right")
                     t_right = True
-		    driving = False
-		    driving_b = False
-		    self.drive("stop")
+                    driving = False
+                    driving_b = False
+                    self.drive("stop")
                     self.drive("turn_r")
                 elif json_data['Axis0'] != '1' and t_right == True:
                     self.output_queue.put("No longer turning Right")
@@ -204,9 +249,9 @@ class SerialProcess(multiprocessing.Process):
                 if json_data['Axis0'] == '-1' and t_left == False:
                     self.output_queue.put("Turning Left")
                     t_left = True
-		    driving = False
-		    driving_b = False
-		    self.drive("stop")
+                    driving = False
+                    driving_b = False
+                    self.drive("stop")
                     self.drive("turn_l")
                 elif json_data['Axis0'] != '-1' and t_left == True:
                     self.output_queue.put("No longer turning Left")
@@ -228,10 +273,18 @@ class SerialProcess(multiprocessing.Process):
                     self.output_queue.put("Driving backwards")
                     driving_b = True
                     self.drive("drive_b")
-		elif json_data['Button6'] == 'false' and driving_b == True:
+                elif json_data['Button6'] == 'false' and driving_b == True:
                     self.output_queue.put("No longer driving backwards")
                     driving_b = False
                     self.drive("stop")
+                #if #Camera:
+                    #todo
+            if self.tilt_time != 0 or self.pan_time != 0:
+                t = time.time()
+                if (t - self.tilt_time) >= 0.5:
+                    self.camera_tilt(0)
+                if (t - self.pan_time) >= 0.5:
+                    self.camera_pan(0)
                 # send it to the serial device
                 #self.writeSerial(data)
                 #print "Done"
