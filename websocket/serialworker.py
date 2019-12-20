@@ -159,14 +159,14 @@ class SerialProcess(multiprocessing.Process):
         #self.sp.flushInput()
 	    # GPIO-Pin-configuration for motors
         self.MOTORS = {
-            'MOTOR_VL_PWM': 7, #PWM-signal front-left
-            'MOTOR_VL_CTRL': 11, #Controll-signal front-left
-            'MOTOR_VR_PWM': 10, #
-            'MOTOR_VR_CTRL': 13,
-            'MOTOR_HL_PWM': 12,
-            'MOTOR_HL_CTRL': 14,
-            'MOTOR_HR_PWM': 15,
-            'MOTOR_HR_CTRL': 16
+            'MOTOR_VL_PWM': 23, #PWM-signal front-left
+            'MOTOR_VL_CTRL': 21, #Controll-signal front-left
+            'MOTOR_VR_PWM': 15, #
+            'MOTOR_VR_CTRL': 19,
+            'MOTOR_HL_PWM': 11,
+            'MOTOR_HL_CTRL': 7,
+            'MOTOR_HR_PWM': 3,
+            'MOTOR_HR_CTRL': 5
         }
         # Not in use
         # LED's
@@ -201,7 +201,7 @@ class SerialProcess(multiprocessing.Process):
         wiringpi.wiringPiSetup()
 
         GPIO.setmode(GPIO.BOARD)
-        #wiringpi.wiringPiSetupGpio()
+        wiringpi.wiringPiSetupGpio()
         wiringpi.mcp23017Setup(100, 0x20)
         #self.init_LEDs()
         self.init_Sensors()
@@ -216,17 +216,17 @@ class SerialProcess(multiprocessing.Process):
 
         self.init()
         t_right = t_left = driving = driving_b = False
-        while 1: #make camera movement more smooth
-            for i in range(30,120,1):
-                a = i/10
-                self.camera_pan(a)
-                self.camera_tilt(a)
-                time.sleep(0.01)
-            for i in range(120,30,-1):
-                a = i/10
-                self.camera_pan(a)
-                self.camera_tilt(a)
-                time.sleep(0.01)
+        #while 1: #make camera movement more smooth
+            #for i in range(30,120,1):
+                #a = i/10
+                #self.camera_pan(a)
+                #self.camera_tilt(a)
+                #time.sleep(0.01)
+            #for i in range(120,30,-1):
+                #a = i/10
+                #self.camera_pan(a)
+                #self.camera_tilt(a)
+                #time.sleep(0.01)
         self.camera_pan(7.5)
         self.camera_tilt(7.5)
     	
