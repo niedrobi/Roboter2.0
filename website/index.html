@@ -76,7 +76,7 @@ function pollGamepads() {
 		{
 		  //message = "Gamepad connected at index " + gp.index + ": " + gp.id + ". It has " + gp.buttons.length + " buttons and " + gp.axes.length + " axes.";
 		  //message = "Button 2 = " + buttonPressed(gp.buttons[7]);
-		  message = "{\"Axis0\" : \""+gp.axes[0]+"\",\"Button6\" : \""+buttonPressed(gp.buttons[6])+"\",\"Button7\" : \""+buttonPressed(gp.buttons[7])+"\"}";
+		  message = "{\"Axis0\" : \""+gp.axes[0]+"\",\"Button6\" : \""+buttonPressed(gp.buttons[6])+"\",\"Button7\" : \""+buttonPressed(gp.buttons[7])+"\",\"Axis2\" : \""+gp.axes[2]+"\",\"Axis5\" : \""+gp.axes[5]+"\",\"Button2\" : \""+buttonPressed(gp.buttons[2])+"\"}";
 		  if(message != m2)
 		  {
 			socket.send(message);

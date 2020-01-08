@@ -4,7 +4,6 @@ import multiprocessing
 import json
 import RPi.GPIO as GPIO
 #import drive
-import wiringpi
 
 ## Change this to match your local settings
 #SERIAL_PORT = '/dev/ttyACM0'
@@ -33,117 +32,124 @@ class SerialProcess(multiprocessing.Process):
         self.pan.ChangeDutyCycle(dc)
         self.pan_time = time.time()
 
+    def camera(self, state):
+        if state == "pan_r":
+            #
+        elif state == "pan_l":
+            #
+        elif state == "pan_stop":
+            #
+        elif state == "tilt_u":
+            #
+        elif state == "tilt_d":
+            #
+        elif state == "tilt_stop":
+
     def drive(self, state):
         if state == "stop":
-            #wiringpi.digitalWrite(self.MOTORS['MOTOR_VL_CTRL'], self.HIGH)
-            #vl = GPIO.PWM(self.MOTORS['MOTOR_VL_PWM'], 100)
-            #vl.start(1)
-            #hier nur noch dc nder und ganzes PWM fr jeden Motor in init
-            #wiringpi.softPwmWrite(self.MOTORS['MOTOR_VL_PWM'], 100)
 
-            wiringpi.digitalWrite(self.MOTORS['MOTOR_HL_CTRL'], self.HIGH)
-            wiringpi.softPwmWrite(self.MOTORS['MOTOR_HL_PWM'], 100)
+            GPIO.output(self.MOTORS['MOTOR_VL_CTRL'], GPIO.HIGH)
+            self.motot_vl_pwm.ChangeDutyCycle(0)
 
-            wiringpi.digitalWrite(self.MOTORS['MOTOR_VR_CTRL'], self.HIGH)
-            wiringpi.softPwmWrite(self.MOTORS['MOTOR_VR_PWM'], 100)
+            GPIO.output(self.MOTORS['MOTOR_HL_CTRL'], GPIO.HIGH)
+            self.motot_hl_pwm.ChangeDutyCycle(0)
 
-            wiringpi.digitalWrite(self.MOTORS['MOTOR_HR_CTRL'], self.HIGH)
-            wiringpi.softPwmWrite(self.MOTORS['MOTOR_HR_PWM'], 100)
+            GPIO.output(self.MOTORS['MOTOR_VR_CTRL'], GPIO.HIGH)
+            self.motot_vr_pwm.ChangeDutyCycle(0)
+
+            GPIO.output(self.MOTORS['MOTOR_HR_CTRL'], GPIO.HIGH)
+            self.motot_hr_pwm.ChangeDutyCycle(0)
 
         elif state == "drive_f":
-            wiringpi.digitalWrite(self.MOTORS['MOTOR_VL_CTRL'], self.HIGH)
-            wiringpi.softPwmWrite(self.MOTORS['MOTOR_VL_PWM'], self.SPEED['speed_f'])
 
-            wiringpi.digitalWrite(self.MOTORS['MOTOR_HL_CTRL'], self.HIGH)
-            wiringpi.softPwmWrite(self.MOTORS['MOTOR_HL_PWM'], self.SPEED['speed_f'])
+            GPIO.output(self.MOTORS['MOTOR_VL_CTRL'], GPIO.HIGH)
+            self.motot_vl_pwm.ChangeDutyCycle(self.SPEED['speed_f'])
 
-            wiringpi.digitalWrite(self.MOTORS['MOTOR_VR_CTRL'], self.HIGH)
-            wiringpi.softPwmWrite(self.MOTORS['MOTOR_VR_PWM'], self.SPEED['speed_f'])
+            GPIO.output(self.MOTORS['MOTOR_HL_CTRL'], GPIO.HIGH)
+            self.motot_hl_pwm.ChangeDutyCycle(self.SPEED['speed_f'])
 
-            wiringpi.digitalWrite(self.MOTORS['MOTOR_HR_CTRL'], self.HIGH)
-            wiringpi.softPwmWrite(self.MOTORS['MOTOR_HR_PWM'], self.SPEED['speed_f'])
+            GPIO.output(self.MOTORS['MOTOR_VR_CTRL'], GPIO.HIGH)
+            self.motot_vr_pwm.ChangeDutyCycle(self.SPEED['speed_f'])
+
+            GPIO.output(self.MOTORS['MOTOR_HR_CTRL'], GPIO.HIGH)
+            self.motot_hr_pwm.ChangeDutyCycle(self.SPEED['speed_f'])
 
         elif state == "drive_b":
-            wiringpi.digitalWrite(self.MOTORS['MOTOR_VL_CTRL'], self.LOW)
-            wiringpi.softPwmWrite(self.MOTORS['MOTOR_VL_PWM'], self.SPEED['speed_b'])
 
-            wiringpi.digitalWrite(self.MOTORS['MOTOR_HL_CTRL'], self.LOW)
-            wiringpi.softPwmWrite(self.MOTORS['MOTOR_HL_PWM'], self.SPEED['speed_b'])
+            GPIO.output(self.MOTORS['MOTOR_VL_CTRL'], GPIO.LOW)
+            self.motot_vl_pwm.ChangeDutyCycle(self.SPEED['speed_b'])
 
-            wiringpi.digitalWrite(self.MOTORS['MOTOR_VR_CTRL'], self.LOW)
-            wiringpi.softPwmWrite(self.MOTORS['MOTOR_VR_PWM'], self.SPEED['speed_b'])
+            GPIO.output(self.MOTORS['MOTOR_HL_CTRL'], GPIO.LOW)
+            self.motot_hl_pwm.ChangeDutyCycle(self.SPEED['speed_b'])
 
-            wiringpi.digitalWrite(self.MOTORS['MOTOR_HR_CTRL'], self.LOW)
-            wiringpi.softPwmWrite(self.MOTORS['MOTOR_HR_PWM'], self.SPEED['speed_b'])
+            GPIO.output(self.MOTORS['MOTOR_VR_CTRL'], GPIO.LOW)
+            self.motot_vr_pwm.ChangeDutyCycle(self.SPEED['speed_b'])
+
+            GPIO.output(self.MOTORS['MOTOR_HR_CTRL'], GPIO.LOW)
+            self.motot_hr_pwm.ChangeDutyCycle(self.SPEED['speed_b'])
 
         elif state == "turn_r":
-            wiringpi.digitalWrite(self.MOTORS['MOTOR_VL_CTRL'], self.LOW)
-            wiringpi.softPwmWrite(self.MOTORS['MOTOR_VL_PWM'], 100)
 
-            wiringpi.digitalWrite(self.MOTORS['MOTOR_HL_CTRL'], self.HIGH)
-            wiringpi.softPwmWrite(self.MOTORS['MOTOR_HL_PWM'], 0)
+            GPIO.output(self.MOTORS['MOTOR_VL_CTRL'], GPIO.LOW)
+            self.motot_vl_pwm.ChangeDutyCycle(100)
 
-            wiringpi.digitalWrite(self.MOTORS['MOTOR_VR_CTRL'], self.HIGH)
-            wiringpi.softPwmWrite(self.MOTORS['MOTOR_VR_PWM'], 0)
+            GPIO.output(self.MOTORS['MOTOR_HL_CTRL'], GPIO.HIGH)
+            self.motot_hl_pwm.ChangeDutyCycle(0)
 
-            wiringpi.digitalWrite(self.MOTORS['MOTOR_HR_CTRL'], self.LOW)
-            wiringpi.softPwmWrite(self.MOTORS['MOTOR_HR_PWM'], 100)
+            GPIO.output(self.MOTORS['MOTOR_VR_CTRL'], GPIO.HIGH)
+            self.motot_vr_pwm.ChangeDutyCycle(0)
+
+            GPIO.output(self.MOTORS['MOTOR_HR_CTRL'], GPIO.LOW)
+            self.motot_hr_pwm.ChangeDutyCycle(100)
 
         elif state == "turn_l":
-            wiringpi.digitalWrite(self.MOTORS['MOTOR_VL_CTRL'], self.HIGH)
-            wiringpi.softPwmWrite(self.MOTORS['MOTOR_VL_PWM'], 0)
 
-            wiringpi.digitalWrite(self.MOTORS['MOTOR_HL_CTRL'], self.LOW)
-            wiringpi.softPwmWrite(self.MOTORS['MOTOR_HL_PWM'], 100)
+            GPIO.output(self.MOTORS['MOTOR_VL_CTRL'], GPIO.HIGH)
+            self.motot_vl_pwm.ChangeDutyCycle(0)
 
-            wiringpi.digitalWrite(self.MOTORS['MOTOR_VR_CTRL'], self.LOW)
-            wiringpi.softPwmWrite(self.MOTORS['MOTOR_VR_PWM'], 100)
+            GPIO.output(self.MOTORS['MOTOR_HL_CTRL'], GPIO.LOW)
+            self.motot_hl_pwm.ChangeDutyCycle(100)
 
-            wiringpi.digitalWrite(self.MOTORS['MOTOR_HR_CTRL'], self.HIGH)
-            wiringpi.softPwmWrite(self.MOTORS['MOTOR_HR_PWM'], 0)
+            GPIO.output(self.MOTORS['MOTOR_VR_CTRL'], GPIO.LOW)
+            self.motot_vr_pwm.ChangeDutyCycle(100)
 
-    #def init_LEDs(self):
-        #wiringpi.pinMode(self.LEDs['LED_FRONT'], wiringpi.GPIO.OUTPUT)
-        #wiringpi.pinMode(self.LEDs['LED_REAR'], wiringpi.GPIO.OUTPUT)
-        #pinMode(LED_FRONT, self.OUTPUT)
-        #pinMode(LED_REAR, self.OUTPUT)
+            GPIO.output(self.MOTORS['MOTOR_HR_CTRL'], GPIO.HIGH)
+            self.motot_hr_pwm.ChangeDutyCycle(0)
 
     def init_Sensors(self):
-        wiringpi.pinMode(self.SENSORS['DISTANZSENSOR_B'], wiringpi.GPIO.INPUT)
 
-        wiringpi.pinMode(self.SENSORS['DISTANZSENSOR_F'], wiringpi.GPIO.INPUT)
-        wiringpi.pullUpDnControl(self.SENSORS['DISTANZSENSOR_F'], wiringpi.GPIO.PUD_UP)
+        GPIO.setup(self.SENSORS['DISTANZSENSOR_B'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-        wiringpi.pinMode(self.SENSORS['DISTANZSENSOR_L'], wiringpi.GPIO.INPUT)
-        wiringpi.pullUpDnControl(self.SENSORS['DISTANZSENSOR_L'], wiringpi.GPIO.PUD_UP)
+        GPIO.setup(self.SENSORS['DISTANZSENSOR_F'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-        wiringpi.pinMode(self.SENSORS['DISTANZSENSOR_R'], wiringpi.GPIO.INPUT)
-        wiringpi.pullUpDnControl(self.SENSORS['DISTANZSENSOR_R'], wiringpi.GPIO.PUD_UP)
+        GPIO.setup(self.SENSORS['DISTANZSENSOR_L'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-    #def init_Trace(self):
-        #wiringpi.pinMode(self.TRACE['SPUR_L'], wiringpi.GPIO.INPUT)
-        #wiringpi.pinMode(self.TRACE['SPUR_R'], wiringpi.GPIO.INPUT)
-        #sssgflskljdg
+        GPIO.setup(self.SENSORS['DISTANZSENSOR_R'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
     def init_Motors(self):
-        wiringpi.pinMode(self.MOTORS['MOTOR_VL_CTRL'], wiringpi.GPIO.OUTPUT)
-        wiringpi.pinMode(self.MOTORS['MOTOR_VL_PWM'], wiringpi.GPIO.PWM_OUTPUT)
-        wiringpi.softPwmCreate(self.MOTORS['MOTOR_VL_PWM'], 0, 100)
 
-        wiringpi.pinMode(self.MOTORS['MOTOR_VR_CTRL'], wiringpi.GPIO.OUTPUT)
-        wiringpi.pinMode(self.MOTORS['MOTOR_VR_PWM'], wiringpi.GPIO.PWM_OUTPUT)
-        wiringpi.softPwmCreate(self.MOTORS['MOTOR_VR_PWM'], 0, 100)
+        GPIO.setup(self.MOTORS['MOTOR_VL_CTRL'], GPIO.OUT)
+        GPIO.setup(self.MOTORS['MOTOR_VL_PWM'], GPIO.OUT)
+        self.motot_vl_pwm = GPIO.PWM(self.MOTORS['MOTOR_VL_PWM'],50)
+        self.motot_vl_pwm.start(0)
 
-        wiringpi.pinMode(self.MOTORS['MOTOR_HL_CTRL'], wiringpi.GPIO.OUTPUT)
-        wiringpi.pinMode(self.MOTORS['MOTOR_HL_PWM'], wiringpi.GPIO.PWM_OUTPUT)
-        wiringpi.softPwmCreate(self.MOTORS['MOTOR_HL_PWM'], 0, 100)
+        GPIO.setup(self.MOTORS['MOTOR_VR_CTRL'], GPIO.OUT)
+        GPIO.setup(self.MOTORS['MOTOR_VR_PWM'], GPIO.OUT)
+        self.motot_vr_pwm = GPIO.PWM(self.MOTORS['MOTOR_VR_PWM'],50)
+        self.motot_vr_pwm.start(0)
 
-        wiringpi.pinMode(self.MOTORS['MOTOR_HR_CTRL'], wiringpi.GPIO.OUTPUT)
-        wiringpi.pinMode(self.MOTORS['MOTOR_HR_PWM'], wiringpi.GPIO.PWM_OUTPUT)
-        wiringpi.softPwmCreate(self.MOTORS['MOTOR_HR_PWM'], 0, 100)
+        GPIO.setup(self.MOTORS['MOTOR_HL_CTRL'], GPIO.OUT)
+        GPIO.setup(self.MOTORS['MOTOR_HL_PWM'], GPIO.OUT)
+        self.motot_hl_pwm = GPIO.PWM(self.MOTORS['MOTOR_HL_PWM'],50)
+        self.motot_hl_pwm.start(0)
+
+        GPIO.setup(self.MOTORS['MOTOR_HR_CTRL'], GPIO.OUT)
+        GPIO.setup(self.MOTORS['MOTOR_HR_PWM'], GPIO.OUT)
+        self.motot_hr_pwm = GPIO.PWM(self.MOTORS['MOTOR_HR_PWM'],50)
+        self.motot_hr_pwm.start(0)
 
     def init_Taster(self):
-        wiringpi.pinMode(self.TASTER, wiringpi.GPIO.INPUT)
-        wiringpi.pullUpDnControl(self.TASTER, wiringpi.GPIO.PUD_UP)
+        GPIO.setup(self.TASTER, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
     def init_Camera(self):       
         tiltPin = 13
@@ -198,11 +204,11 @@ class SerialProcess(multiprocessing.Process):
         self.PUD_UP = 2
         self.HIGH = 1
         self.LOW = 0
-        wiringpi.wiringPiSetup()
+        #wiringpi.wiringPiSetup()
 
         GPIO.setmode(GPIO.BOARD)
-        wiringpi.wiringPiSetupGpio()
-        wiringpi.mcp23017Setup(100, 0x20)
+        #wiringpi.wiringPiSetupGpio()
+        #wiringpi.mcp23017Setup(100, 0x20)
         #self.init_LEDs()
         self.init_Sensors()
         #self.init_Trace()
@@ -215,7 +221,7 @@ class SerialProcess(multiprocessing.Process):
     def run(self):
 
         self.init()
-        t_right = t_left = driving = driving_b = False
+        t_right = t_left = driving = driving_b = pan_l = = pan_r = tilt_u = tilt_d = False
         #while 1: #make camera movement more smooth
             #for i in range(30,120,1):
                 #a = i/10
@@ -277,14 +283,53 @@ class SerialProcess(multiprocessing.Process):
                     self.output_queue.put("No longer driving backwards")
                     driving_b = False
                     self.drive("stop")
-                #if #Camera:
-                    #todo
-            if self.tilt_time != 0 or self.pan_time != 0:
-                t = time.time()
-                if (t - self.tilt_time) >= 0.5:
-                    self.camera_tilt(0)
-                if (t - self.pan_time) >= 0.5:
-                    self.camera_pan(0)
+
+                    #Camera pan
+                if json_data['Axis2'] == '1' and pan_l == False:
+                    self.output_queue.put("Pan left")
+                    pan_l = True
+                    pan_r = False
+                    self.camera("pan_l")
+                elif json_data['Axis2'] != '1' and pan_l == True:
+                    self.output_queue.put("No longer pan left")
+                    pan_l = False
+                    self.camera("pan_stop")
+                if json_data['Axis2'] == '-1' and pan_r == False:
+                    self.output_queue.put("Pan right")
+                    pan_l = False
+                    pan_r = True
+                    self.camera("pan_r")
+                elif json_data['Axis2'] != '-1' and pan_r == True:
+                    self.output_queue.put("No longer pan right")
+                    pan_r = False
+                    self.camera("pan_stop")
+
+                    #Camera tilt
+                if json_data['Axis5'] == '1' and tilt_u == False:
+                    self.output_queue.put("Tilt up")
+                    tilt_u = True
+                    tilt_d = False
+                    self.camera("tilt_u")
+                elif json_data['Axis5'] != '1' and tilt_u == True:
+                    self.output_queue.put("No longer tilt up")
+                    tilt_u = False
+                    self.camera("tilt_stop")
+                if json_data['Axis5'] == '-1' and tilt_d == False:
+                    self.output_queue.put("Tilt down")
+                    tilt_u = False
+                    tilt_d = True
+                    self.camera("tilt_d")
+                elif json_data['Axis5'] != '-1' and tilt_d == True:
+                    self.output_queue.put("No longer tilt down")
+                    tilt_d = False
+                    self.camera("tilt_stop")
+
+            # if self.tilt_time != 0 or self.pan_time != 0:
+            #     t = time.time()
+            #     if (t - self.tilt_time) >= 0.5:
+            #         self.camera_tilt(0)
+            #     if (t - self.pan_time) >= 0.5:
+            #         self.camera_pan(0)
                 # send it to the serial device
                 #self.writeSerial(data)
                 #print "Done"
