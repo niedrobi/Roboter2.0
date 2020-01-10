@@ -38,6 +38,7 @@ socket.onopen = function(){
 };
 socket.onmessage = function (message) {
   console.log("receiving: " + message.data);
+  received.empty();
   received.append(message.data);
   received.append($('<br/>'));
 };

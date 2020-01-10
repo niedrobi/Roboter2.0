@@ -3,11 +3,18 @@ import time
 import multiprocessing
 import json
 import RPi.GPIO as GPIO
+import signal
+import sys
 #import drive
 
 ## Change this to match your local settings
 #SERIAL_PORT = '/dev/ttyACM0'
 #SERIAL_BAUDRATE = 115200
+
+def signal_handler(sig, frame):
+    print "Closing Programm ..."
+    GPIO.cleanup()
+    sys.exit(0)
 
 class SerialProcess(multiprocessing.Process):
  
@@ -15,39 +22,58 @@ class SerialProcess(multiprocessing.Process):
         multiprocessing.Process.__init__(self)
         self.input_queue = input_queue
         self.output_queue = output_queue
-        self.pan_time = 0
-        self.tilt_time = 0
+        self.pan_angle = 7.5
+        self.tilt_angle = 7.5
         #self.driver = drive.Driver()
         #self.sp = serial.Serial(SERIAL_PORT, SERIAL_BAUDRATE, timeout=1)
-        
  
     def close(self):
         print "closed"
 
     def camera_tilt(self,dc):
         self.tilt.ChangeDutyCycle(dc)
-        self.tilt_time = time.time()
 
     def camera_pan(self,dc):
         self.pan.ChangeDutyCycle(dc)
-        self.pan_time = time.time()
 
-    def camera(self, state):
+    def pan_camera(self, state):
         if state == "pan_r":
-            #
+            if self.pan_angle >= 3:
+                self.pan_angle -= 0.01
+                self.pan.ChangeDutyCycle(self.pan_angle)
+            else:
+                self.pan.ChangeDutyCycle(0)
+
         elif state == "pan_l":
-            #
+            if self.pan_angle <= 13:
+                self.pan_angle += 0.01
+                self.pan.ChangeDutyCycle(self.pan_angle)
+            else:
+                self.pan.ChangeDutyCycle(0)
+
         elif state == "pan_stop":
-            #
-        elif state == "tilt_u":
-            #
+            self.pan.ChangeDutyCycle(0)
+
+    def tilt_camera(self, state):
+        if state == "tilt_u":
+            if self.tilt_angle >= 3:
+                self.tilt_angle -= 0.01
+                self.tilt.ChangeDutyCycle(self.tilt_angle)
+            else:
+                self.tilt.ChangeDutyCycle(0)
+
         elif state == "tilt_d":
-            #
+            if self.tilt_angle <= 13:
+                self.tilt_angle += 0.01
+                self.tilt.ChangeDutyCycle(self.tilt_angle)
+            else:
+                self.tilt.ChangeDutyCycle(0)
+
         elif state == "tilt_stop":
+            self.tilt.ChangeDutyCycle(0)
 
     def drive(self, state):
         if state == "stop":
-
             GPIO.output(self.MOTORS['MOTOR_VL_CTRL'], GPIO.HIGH)
             self.motot_vl_pwm.ChangeDutyCycle(0)
 
@@ -119,6 +145,7 @@ class SerialProcess(multiprocessing.Process):
     def init_Sensors(self):
 
         GPIO.setup(self.SENSORS['DISTANZSENSOR_B'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        GPIO.setup()
 
         GPIO.setup(self.SENSORS['DISTANZSENSOR_F'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
@@ -131,22 +158,22 @@ class SerialProcess(multiprocessing.Process):
         GPIO.setup(self.MOTORS['MOTOR_VL_CTRL'], GPIO.OUT)
         GPIO.setup(self.MOTORS['MOTOR_VL_PWM'], GPIO.OUT)
         self.motot_vl_pwm = GPIO.PWM(self.MOTORS['MOTOR_VL_PWM'],50)
-        self.motot_vl_pwm.start(0)
+        self.motot_vl_pwm.start(100)
 
         GPIO.setup(self.MOTORS['MOTOR_VR_CTRL'], GPIO.OUT)
         GPIO.setup(self.MOTORS['MOTOR_VR_PWM'], GPIO.OUT)
         self.motot_vr_pwm = GPIO.PWM(self.MOTORS['MOTOR_VR_PWM'],50)
-        self.motot_vr_pwm.start(0)
+        self.motot_vr_pwm.start(100)
 
         GPIO.setup(self.MOTORS['MOTOR_HL_CTRL'], GPIO.OUT)
         GPIO.setup(self.MOTORS['MOTOR_HL_PWM'], GPIO.OUT)
         self.motot_hl_pwm = GPIO.PWM(self.MOTORS['MOTOR_HL_PWM'],50)
-        self.motot_hl_pwm.start(0)
+        self.motot_hl_pwm.start(100)
 
         GPIO.setup(self.MOTORS['MOTOR_HR_CTRL'], GPIO.OUT)
         GPIO.setup(self.MOTORS['MOTOR_HR_PWM'], GPIO.OUT)
         self.motot_hr_pwm = GPIO.PWM(self.MOTORS['MOTOR_HR_PWM'],50)
-        self.motot_hr_pwm.start(0)
+        self.motot_hr_pwm.start(100)
 
     def init_Taster(self):
         GPIO.setup(self.TASTER, GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -210,9 +237,9 @@ class SerialProcess(multiprocessing.Process):
         #wiringpi.wiringPiSetupGpio()
         #wiringpi.mcp23017Setup(100, 0x20)
         #self.init_LEDs()
-        self.init_Sensors()
+        #self.init_Sensors()
         #self.init_Trace()
-        self.init_Taster()
+        #self.init_Taster()
         self.init_Motors()
         self.init_Camera()
         self.drive("stop")
@@ -221,7 +248,12 @@ class SerialProcess(multiprocessing.Process):
     def run(self):
 
         self.init()
-        t_right = t_left = driving = driving_b = pan_l = = pan_r = tilt_u = tilt_d = False
+        signal.signal(signal.SIGINT, signal_handler)
+        t_right = t_left = driving = driving_b = pan_l = pan_r = tilt_u = tilt_d = False
+        pan_state = "pan_stop"
+        tilt_state = "tilt_stop"
+
+
         #while 1: #make camera movement more smooth
             #for i in range(30,120,1):
                 #a = i/10
@@ -233,10 +265,15 @@ class SerialProcess(multiprocessing.Process):
                 #self.camera_pan(a)
                 #self.camera_tilt(a)
                 #time.sleep(0.01)
-        self.camera_pan(7.5)
-        self.camera_tilt(7.5)
+        self.camera_pan(2)
+        self.camera_tilt(2)
     	
         while True:
+
+            self.pan_camera(pan_state)
+            self.tilt_camera(tilt_state)
+            time.sleep(0.002)
+
             # look for incoming tornado request
             if not self.input_queue.empty():
                 data = self.input_queue.get()
@@ -285,44 +322,44 @@ class SerialProcess(multiprocessing.Process):
                     self.drive("stop")
 
                     #Camera pan
-                if json_data['Axis2'] == '1' and pan_l == False:
+                if json_data['Axis5'] == '1' and pan_l == False:
                     self.output_queue.put("Pan left")
                     pan_l = True
                     pan_r = False
-                    self.camera("pan_l")
-                elif json_data['Axis2'] != '1' and pan_l == True:
+                    pan_state = "pan_l"
+                elif json_data['Axis5'] != '1' and pan_l == True:
                     self.output_queue.put("No longer pan left")
                     pan_l = False
-                    self.camera("pan_stop")
-                if json_data['Axis2'] == '-1' and pan_r == False:
+                    pan_state = "pan_stop"
+                if json_data['Axis5'] == '-1' and pan_r == False:
                     self.output_queue.put("Pan right")
                     pan_l = False
                     pan_r = True
-                    self.camera("pan_r")
-                elif json_data['Axis2'] != '-1' and pan_r == True:
+                    pan_state = "pan_r"
+                elif json_data['Axis5'] != '-1' and pan_r == True:
                     self.output_queue.put("No longer pan right")
                     pan_r = False
-                    self.camera("pan_stop")
+                    pan_state = "pan_stop"
 
                     #Camera tilt
-                if json_data['Axis5'] == '1' and tilt_u == False:
+                if json_data['Axis2'] == '1' and tilt_u == False:
                     self.output_queue.put("Tilt up")
                     tilt_u = True
                     tilt_d = False
-                    self.camera("tilt_u")
-                elif json_data['Axis5'] != '1' and tilt_u == True:
+                    tilt_state = "tilt_u"
+                elif json_data['Axis2'] != '1' and tilt_u == True:
                     self.output_queue.put("No longer tilt up")
                     tilt_u = False
-                    self.camera("tilt_stop")
-                if json_data['Axis5'] == '-1' and tilt_d == False:
+                    tilt_state = "tilt_stop"
+                if json_data['Axis2'] == '-1' and tilt_d == False:
                     self.output_queue.put("Tilt down")
                     tilt_u = False
                     tilt_d = True
-                    self.camera("tilt_d")
-                elif json_data['Axis5'] != '-1' and tilt_d == True:
+                    tilt_state = "tilt_d"
+                elif json_data['Axis2'] != '-1' and tilt_d == True:
                     self.output_queue.put("No longer tilt down")
                     tilt_d = False
-                    self.camera("tilt_stop")
+                    tilt_state = "tilt_stop"
 
             # if self.tilt_time != 0 or self.pan_time != 0:
             #     t = time.time()
