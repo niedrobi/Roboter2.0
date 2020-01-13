@@ -19,5 +19,5 @@ pip install requirements.txt
 ```
 Start the server
 ```
-python server.py
+sudo python server.py
 ```
