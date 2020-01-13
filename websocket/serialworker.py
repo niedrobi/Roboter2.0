@@ -265,8 +265,9 @@ class SerialProcess(multiprocessing.Process):
                 #self.camera_pan(a)
                 #self.camera_tilt(a)
                 #time.sleep(0.01)
-        self.camera_pan(2)
-        self.camera_tilt(2)
+        self.camera_pan(7.5)
+        self.camera_tilt(7.5)
+        time.sleep(1)
     	
         while True:
 
