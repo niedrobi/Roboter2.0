@@ -75,16 +75,16 @@ class SerialProcess(multiprocessing.Process):
     def drive(self, state):
         if state == "stop":
             GPIO.output(self.MOTORS['MOTOR_VL_CTRL'], GPIO.HIGH)
-            self.motot_vl_pwm.ChangeDutyCycle(0)
+            self.motot_vl_pwm.ChangeDutyCycle(100)
 
             GPIO.output(self.MOTORS['MOTOR_HL_CTRL'], GPIO.HIGH)
-            self.motot_hl_pwm.ChangeDutyCycle(0)
+            self.motot_hl_pwm.ChangeDutyCycle(100)
 
             GPIO.output(self.MOTORS['MOTOR_VR_CTRL'], GPIO.HIGH)
-            self.motot_vr_pwm.ChangeDutyCycle(0)
+            self.motot_vr_pwm.ChangeDutyCycle(100)
 
             GPIO.output(self.MOTORS['MOTOR_HR_CTRL'], GPIO.HIGH)
-            self.motot_hr_pwm.ChangeDutyCycle(0)
+            self.motot_hr_pwm.ChangeDutyCycle(100)
 
         elif state == "drive_f":
 
