@@ -37,7 +37,17 @@ class SerialProcess(multiprocessing.Process):
         self.pan.ChangeDutyCycle(dc)
 
     def pan_camera(self, state):
-        if state == "pan_r":
+        if self.center_pan == True:
+            if self.pan_angle > 7.5:
+                self.pan_angle -= 0.01
+                self.pan.ChangeDutyCycle(self.pan_angle)
+            elif self.pan_angle < 7.5:
+                self.pan_angle += 0.01
+                self.pan.ChangeDutyCycle(self.pan_angle)
+            elif self.pan_angle == 7.5:
+                self.center_pan = False
+                self.pan.ChangeDutyCycle(0)
+        elif state == "pan_r":
             if self.pan_angle >= 3:
                 self.pan_angle -= 0.01
                 self.pan.ChangeDutyCycle(self.pan_angle)
@@ -55,7 +65,18 @@ class SerialProcess(multiprocessing.Process):
             self.pan.ChangeDutyCycle(0)
 
     def tilt_camera(self, state):
-        if state == "tilt_u":
+        if self.center_tilt == True:
+            if self.tilt_angle > 7.5:
+                self.tilt_angle -= 0.01
+                self.tilt.ChangeDutyCycle(self.tilt_angle)
+            elif self.tilt_angle < 7.5:
+                self.tilt_angle += 0.01
+                self.tilt.ChangeDutyCycle(self.tilt_angle)
+            elif self.tilt_angle == 7.5:
+                self.center_tilt = False
+                self.tilt.ChangeDutyCycle(0)
+
+        elif state == "tilt_u":
             if self.tilt_angle >= 3:
                 self.tilt_angle -= 0.01
                 self.tilt.ChangeDutyCycle(self.tilt_angle)
@@ -144,14 +165,13 @@ class SerialProcess(multiprocessing.Process):
 
     def init_Sensors(self):
 
-        GPIO.setup(self.SENSORS['DISTANZSENSOR_B'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        GPIO.setup()
+        GPIO.setup(self.SENSORS['DISTANZSENSOR_B'], GPIO.IN)
 
-        GPIO.setup(self.SENSORS['DISTANZSENSOR_F'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        GPIO.setup(self.SENSORS['DISTANZSENSOR_F'], GPIO.IN)
 
-        GPIO.setup(self.SENSORS['DISTANZSENSOR_L'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
-
-        GPIO.setup(self.SENSORS['DISTANZSENSOR_R'], GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        GPIO.setup(self.SENSORS['DISTANZSENSOR_L'], GPIO.IN)
+        #pull_up_down=GPIO.PUD_UP
+        GPIO.setup(self.SENSORS['DISTANZSENSOR_R'], GPIO.IN )
 
     def init_Motors(self):
 
@@ -209,10 +229,10 @@ class SerialProcess(multiprocessing.Process):
         #}
         # GPIO-Pin-configuration for sensors
         self.SENSORS = {
-            'DISTANZSENSOR_F': 101,
-            'DISTANZSENSOR_L': 102,
-            'DISTANZSENSOR_R': 103,
-            'DISTANZSENSOR_B': 0
+            'DISTANZSENSOR_F': 29,
+            'DISTANZSENSOR_L': 31,
+            'DISTANZSENSOR_R': 33,
+            'DISTANZSENSOR_B': 36
         }
         # trace
         self.TRACE = {
@@ -237,7 +257,7 @@ class SerialProcess(multiprocessing.Process):
         #wiringpi.wiringPiSetupGpio()
         #wiringpi.mcp23017Setup(100, 0x20)
         #self.init_LEDs()
-        #self.init_Sensors()
+        self.init_Sensors()
         #self.init_Trace()
         #self.init_Taster()
         self.init_Motors()
@@ -249,7 +269,7 @@ class SerialProcess(multiprocessing.Process):
 
         self.init()
         signal.signal(signal.SIGINT, signal_handler)
-        t_right = t_left = driving = driving_b = pan_l = pan_r = tilt_u = tilt_d = False
+        t_right = t_left = driving = driving_b = pan_l = pan_r = tilt_u = tilt_d = self.center_pan = self.center_tilt = sensor_stop = False
         pan_state = "pan_stop"
         tilt_state = "tilt_stop"
 
@@ -268,17 +288,28 @@ class SerialProcess(multiprocessing.Process):
         self.camera_pan(7.5)
         self.camera_tilt(7.5)
         time.sleep(1)
-    	
+
         while True:
 
             self.pan_camera(pan_state)
             self.tilt_camera(tilt_state)
             time.sleep(0.002)
 
+            if not GPIO.input(self.SENSORS['DISTANZSENSOR_L']) and sensor_stop == False:
+                sensor_stop == True
+                self.drive("stop")
+
+            if GPIO.input(self.SENSORS['DISTANZSENSOR_L']) and sensor_stop == True:
+                sensor_stop = False
+
             # look for incoming tornado request
             if not self.input_queue.empty():
+
+                #Load Json data
                 data = self.input_queue.get()
                 json_data = json.loads(data)
+
+                #Turn Right
                 if json_data['Axis0'] == '1' and t_right == False:
                     self.output_queue.put("Turning Right")
                     t_right = True
@@ -290,6 +321,8 @@ class SerialProcess(multiprocessing.Process):
                     self.output_queue.put("No longer turning Right")
                     t_right = False
                     self.drive("stop")
+
+                #Turn Left
                 if json_data['Axis0'] == '-1' and t_left == False:
                     self.output_queue.put("Turning Left")
                     t_left = True
@@ -301,7 +334,15 @@ class SerialProcess(multiprocessing.Process):
                     self.output_queue.put("No longer turning Left")
                     t_left = False
                     self.drive("stop")
-                if json_data['Button7'] == 'true' and t_left == False and t_right == False and driving == False and driving_b == False:
+
+                #Center Camera
+                if json_data['Button2'] == 'true' and self.center_pan == False and self.center_tilt == False:
+                    self.output_queue.put("Center Camera")
+                    self.center_pan = True
+                    self.center_tilt = True
+
+                #Drive forward
+                if json_data['Button7'] == 'true' and t_left == False and t_right == False and driving == False and driving_b == False and sensor_stop == False:
                     self.output_queue.put("Driving")
                     driving = True
                     self.drive("drive_f")
@@ -309,10 +350,8 @@ class SerialProcess(multiprocessing.Process):
                     self.output_queue.put("No longer Driving")
                     driving = False
                     self.drive("stop")
-                #if driving == True and (t_left == True or t_right == True):
-                    #self.output_queue.put("No longer Driving")
-                    #driving = False
-                    #self.drive("stop")
+
+                #Drive backwards
                 if json_data['Button6'] == 'true' and driving == False and driving_b == False and t_right == False and t_left == False:
                     self.output_queue.put("Driving backwards")
                     driving_b = True
