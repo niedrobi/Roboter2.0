@@ -1,5 +1,5 @@
 backports-abc==0.5
-certifi==2019.9.11
+certifi==2022.12.7
 cryptography==1.7.1
 docopt==0.6.2
 enum34==1.1.6
